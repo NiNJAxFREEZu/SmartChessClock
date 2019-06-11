@@ -235,43 +235,6 @@ void setClocks(int presetIndex)						//Funkcja ustawia czas obu zegarów z numer
 	_increment = presets[presetIndex].increment;
 }
 
-int decrement(struct _time* clock)					//Funkcja pomniejsza wartośc struktury czasu o 1ms - jeżeli czas upłynął całkowicie - funkcja zwraca wartośc 1
-{
-	if(clock->miliseconds <= 0)
-	{
-		if(clock->seconds == 0)
-		{
-			if(clock->minutes == 0)
-			{
-				return 1;		//Koniec czasu - zwracamy 1
-			}
-			else	{clock->minutes--; clock->seconds = 59; clock->miliseconds = 999;}
-					//Jeżeli liczba minut jest większa od zera odejmujemy jedną minutę z licznika i przestawiamy sekundy oraz milisekundy
-		}
-		else {clock->seconds--; clock->miliseconds = 999;}
-			//Jeżeli liczba sekund jest większa od zera odejmujemy jedną sekundę z zegara i przestawiamy milisekundy
-	}
-	else
-		clock->miliseconds--;
-		//Jeżeli liczba milisekund jest większa od 0 odejmujemy jedną milisekundę z zegara
-
-	return 0;
-}
-
-void increment(struct _time* clock, int secondInc)	//Funkcja inkrementująca dany zegar o podaną liczbę sekund
-{
-	if(secondInc == 0)	//Jeżeli inkrementacja jest "zerowa"
-		return;
-
-	clock->seconds += secondInc;
-
-	if(clock->seconds >= 60)	//Jeżeli przekroczymy zakres 1 minuty dodając sekundy
-	{
-		clock->minutes++;
-		clock->seconds -= 60;
-	}
-}
-
 void clockTick()	//FUNCKJA ZMNIEJSZAJĄCA CZAS ZEGARA WYWO�?YWANA W PRZERWANIU TIMERA i całą logikę z tym związaną
 {
 	if(_currentPlayer == 1)

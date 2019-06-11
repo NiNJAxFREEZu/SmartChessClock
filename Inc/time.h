@@ -1,4 +1,4 @@
-//DEFINICJE PRESETÓW CZASOWYCH
+//DEFINICJE PRESETÓW CZASOWYCH --------------------------------------------------------------------
 
 #define NUMBER_OF_PRESETS		12
 
@@ -32,10 +32,49 @@ struct _preset
 	volatile uint8_t increment;
 };
 
-//ZMIENNE GLOBALNE
+//ZMIENNE GLOBALNE --------------------------------------------------------------------------------
 struct _preset presets[NUMBER_OF_PRESETS];	//Struktura zawieraj¹ca presety czasowe
 struct _time PLAYER1_TIME;	//Struktura przechowuj¹ca informacje o czasie gracza nr 1
 struct _time PLAYER2_TIME;	//Struktura przechowuj¹ca informacje o czasie gracza nr 2
+//-------------------------------------------------------------------------------------------------
+
+//FUNKCJE -----------------------------------------------------------------------------------------
+int decrement(struct _time* clock)	//Funkcja pomniejszaj¹ca strukturê czasu o 1ms
+{
+	if(clock->miliseconds <= 0)
+	{
+		if(clock->seconds == 0)
+		{
+			if(clock->minutes == 0)
+			{
+				return 1;		//Koniec czasu - zwracamy 1
+			}
+			else	{clock->minutes--; clock->seconds = 59; clock->miliseconds = 999;}
+
+		}
+		else {clock->seconds--; clock->miliseconds = 999;}
+
+	}
+	else
+		clock->miliseconds--;
+
+
+	return 0;
+}
+
+void increment(struct _time* clock, int secondInc)	//Funkcja inkremetuj¹ca strukturê czasow¹ o zadan¹ liczbê sekund
+{
+	if(secondInc == 0)	//Je¿eli inkrementacja jest "zerowa"
+		return;
+
+	clock->seconds += secondInc;
+
+	if(clock->seconds >= 60)	//Je¿eli przekroczymy licznik minut podczas inkrementacji
+	{
+		clock->minutes++;
+		clock->seconds -= 60;
+	}
+}
 
 void PresetInit()	//INICJALIZACJA PRESETÓW CZASOWYCH
 {
@@ -116,6 +155,4 @@ void PresetInit()	//INICJALIZACJA PRESETÓW CZASOWYCH
 	presets[BLUETOOTH_PRESET].time.seconds = 0;
 	presets[BLUETOOTH_PRESET].time.minutes = 99;
 	presets[BLUETOOTH_PRESET].increment = 99;
-
-
 }
