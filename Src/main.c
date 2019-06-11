@@ -41,8 +41,9 @@
 #include "stm32l1xx_hal.h"
 
 /* USER CODE BEGIN Includes */
-#include "stm32_tm1637.h"
-#include "stm32_i2c2.h"
+#include "time.h"
+#include "ledDisplay1.h"
+#include "ledDisplay2.h"
 /* USER CODE END Includes */
 
 /* Private variables ---------------------------------------------------------*/
@@ -73,41 +74,6 @@ UART_HandleTypeDef huart3;
 #define DEBUG_DIODE1_OFF		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET)	//Zapalenie niebieskiej diody na plytce
 #define UI_PAUSE_BUTTON			GPIO_PIN_1												//Uchwyt przycisku start/stop
 
-//Definicje presetów czasowych (poniżej inicjalizacja w funkcji PresetInit)
-#define NUMBER_OF_PRESETS		12
-
-#define BULLET_1_0				0
-#define BULLET_2_1				1
-#define BLITZ_3_0				2
-#define BLITZ_3_2				3
-#define BLITZ_5_0				4
-#define	BLITZ_5_3				5
-#define	RAPID_10_0				6
-#define	RAPID_15_0				7
-#define	RAPID_15_15				8
-#define	RAPID_25_0				9
-#define	RAPID_25_10				10
-#define CLASSICAL_30_0			11
-
-#define BLUETOOTH_PRESET		12
-
-//STRUKTURA CZASU
-struct _time
-{
-	volatile uint8_t minutes;
-	volatile uint8_t seconds;
-	volatile uint16_t miliseconds;
-};
-
-//PRESETY CZASOWE
-struct _preset
-{
-	struct _time time;
-	volatile uint8_t increment;
-};
-
-struct _preset presets[NUMBER_OF_PRESETS];	//Struktura zawierająca presety czasowe
-
 //STRUKTURA KOMUNIKATU BLUETOOTH
 struct _bluetooth
 {
@@ -124,11 +90,6 @@ volatile uint8_t _gameOver = 0;			//Zmienna wyznaczająca koniec gry w przypadku
 volatile uint8_t _refresh = 0;			//Zmienna wykorzystywana do odświeżania wyświetlaczy zegara
 volatile int8_t _presetSelect = 0;		//Zmienna wykorzystywana przy wyborze presetu zegara
 volatile uint8_t _display;				//Zmienna wykorzysytwana przy miganiu wyświetlaczami przy pauzie
-
-
-struct _time PLAYER1_TIME;	//Struktura przechowująca informacje o czasie gracza nr 1
-struct _time PLAYER2_TIME;	//Struktura przechowująca informacje o czasie gracza nr 2
-
 
 /* USER CODE END PV */
 
@@ -261,89 +222,6 @@ void addPresetFromBluetooth()
 }
 
 /* FUNKCJE MIERZĄCE/OBS�?UGUJĄCE CZAS---------------------------------------------------------------*/
-void PresetInit()
-{
-	//BULLET 1+0
-	presets[BULLET_1_0].time.miliseconds = 0;
-	presets[BULLET_1_0].time.seconds = 0;
-	presets[BULLET_1_0].time.minutes = 1;
-	presets[BULLET_1_0].increment = 0;
-
-	//BULLET 2+1
-	presets[BULLET_2_1].time.miliseconds = 0;
-	presets[BULLET_2_1].time.seconds = 0;
-	presets[BULLET_2_1].time.minutes = 2;
-	presets[BULLET_2_1].increment = 1;
-
-	//BLITZ 3+0
-	presets[BLITZ_3_0].time.miliseconds = 0;
-	presets[BLITZ_3_0].time.seconds = 0;
-	presets[BLITZ_3_0].time.minutes = 3;
-	presets[BLITZ_3_0].increment = 0;
-
-	//BLITZ 3+2
-	presets[BLITZ_3_2].time.miliseconds = 0;
-	presets[BLITZ_3_2].time.seconds = 0;
-	presets[BLITZ_3_2].time.minutes = 3;
-	presets[BLITZ_3_2].increment = 2;
-
-	//BLITZ 5+0
-	presets[BLITZ_5_0].time.miliseconds = 0;
-	presets[BLITZ_5_0].time.seconds = 0;
-	presets[BLITZ_5_0].time.minutes = 5;
-	presets[BLITZ_5_0].increment = 0;
-
-	//BLITZ 5+3
-	presets[BLITZ_5_3].time.miliseconds = 0;
-	presets[BLITZ_5_3].time.seconds = 0;
-	presets[BLITZ_5_3].time.minutes = 5;
-	presets[BLITZ_5_3].increment = 3;
-
-	//RAPID 10+0
-	presets[RAPID_10_0].time.miliseconds = 0;
-	presets[RAPID_10_0].time.seconds = 0;
-	presets[RAPID_10_0].time.minutes = 10;
-	presets[RAPID_10_0].increment = 0;
-
-	//RAPID 15+0
-	presets[RAPID_15_0].time.miliseconds = 0;
-	presets[RAPID_15_0].time.seconds = 0;
-	presets[RAPID_15_0].time.minutes = 15;
-	presets[RAPID_15_0].increment = 0;
-
-	//RAPID 15+15
-	presets[RAPID_15_15].time.miliseconds = 0;
-	presets[RAPID_15_15].time.seconds = 0;
-	presets[RAPID_15_15].time.minutes = 15;
-	presets[RAPID_15_15].increment = 15;
-
-	//RAPID 25+0
-	presets[RAPID_25_0].time.miliseconds = 0;
-	presets[RAPID_25_0].time.seconds = 0;
-	presets[RAPID_25_0].time.minutes = 25;
-	presets[RAPID_25_0].increment = 0;
-
-	//RAPID 25+10
-	presets[RAPID_25_10].time.miliseconds = 0;
-	presets[RAPID_25_10].time.seconds = 0;
-	presets[RAPID_25_10].time.minutes = 25;
-	presets[RAPID_25_10].increment = 10;
-
-	//CLASSICAL 30+0
-	presets[CLASSICAL_30_0].time.miliseconds = 0;
-	presets[CLASSICAL_30_0].time.seconds = 0;
-	presets[CLASSICAL_30_0].time.minutes = 30;
-	presets[CLASSICAL_30_0].increment = 0;
-
-	//BLUETOOTH
-	presets[BLUETOOTH_PRESET].time.miliseconds = 0;
-	presets[BLUETOOTH_PRESET].time.seconds = 0;
-	presets[BLUETOOTH_PRESET].time.minutes = 99;
-	presets[BLUETOOTH_PRESET].increment = 99;
-
-
-}
-
 void setClocks(int presetIndex)						//Funkcja ustawia czas obu zegarów z numeru presetu
 {
 	PLAYER1_TIME.minutes = 		presets[presetIndex].time.minutes;
@@ -394,7 +272,7 @@ void increment(struct _time* clock, int secondInc)	//Funkcja inkrementująca dan
 	}
 }
 
-void clockTick()									//FUNCKJA ZMNIEJSZAJĄCA CZAS ZEGARA WYWO�?YWANA W PRZERWANIU TIMERA i całą logikę z tym związaną
+void clockTick()	//FUNCKJA ZMNIEJSZAJĄCA CZAS ZEGARA WYWO�?YWANA W PRZERWANIU TIMERA i całą logikę z tym związaną
 {
 	if(_currentPlayer == 1)
 	{
@@ -427,7 +305,7 @@ void clockTick()									//FUNCKJA ZMNIEJSZAJĄCA CZAS ZEGARA WYWO�?YWANA W PR
 	}
 }
 
-void clockIncrement()								//FUNCKJA INKREMENTUJĄCA CZAS ZEGARA WYWO�?YWANA W PRZERWANIU PRZYCISKÓW i całą logikę z tym związaną
+void clockIncrement()	//FUNCKJA INKREMENTUJĄCA CZAS ZEGARA WYWO�?YWANA W PRZERWANIU PRZYCISKÓW i całą logikę z tym związaną
 {
 	if(_pause == 0)	//Jeżeli gra jest spauzowania nie wykonujemy inkrementacji
 	{
@@ -582,7 +460,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)	//Przerwania Timeró
 
    	if(htim->Instance == TIM10)	//Przepełnienie timera nr 10 -> debouncing przycisków
    	{
-   		//FUNKCJA RESET - WSZYSTKIE TRZY PRZYCISKI WCIŚNIĘTE
+   		//FUNKCJA RESET - WSZYSTKIE TRZY PRZYCISKI WCIŚNI�?TE
    		if(HAL_GPIO_ReadPin(GPIOB, UI_PAUSE_BUTTON) == GPIO_PIN_RESET && HAL_GPIO_ReadPin(GPIOB, UI_PLAYER1_BUTTON) == GPIO_PIN_RESET && HAL_GPIO_ReadPin(GPIOB, UI_PLAYER2_BUTTON) == GPIO_PIN_RESET)
    		{
    			//Na razie programowo
@@ -1036,14 +914,11 @@ static void MX_GPIO_Init(void)
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
-  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, PLAYER1_DIODE_Pin|PLAYER2_DIODE_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(DEBUG_TIMER_GPIO_Port, DEBUG_TIMER_Pin, GPIO_PIN_RESET);
@@ -1060,13 +935,6 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : PC8 */
-  GPIO_InitStruct.Pin = GPIO_PIN_8;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : DEBUG_TIMER_Pin */
   GPIO_InitStruct.Pin = DEBUG_TIMER_Pin;
