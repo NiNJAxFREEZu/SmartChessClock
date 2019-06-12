@@ -17,8 +17,8 @@ Projekt oprogramowania do inteligentnego zegara szachowego
   - Czas pamiętany jest w strukturze godziny/minuty/sekundy/milisekundy (godziny in progress)
   - Presety czasowe są pamiętane w tablicy zawierającej w/w strukturę czasu oraz pole inkrementacji (w sekundach)
   - Po uruchomieniu zegara wykonywana jest procedura wyboru presetu czasowego za pomocą przycisków sterujących w następujący sposób:
-  (PLAYER1_BUTTON -> zmniejszenie licznika presetu)
-  (START/STOP -> potwierdzenie wybranego presetu)
-  (PLAYER1_BUTTON -> zwiększenie licznika presetu)
+  -- (PLAYER1_BUTTON -> zmniejszenie licznika presetu)
+  -- (START/STOP -> potwierdzenie wybranego presetu)
+  -- (PLAYER1_BUTTON -> zwiększenie licznika presetu)
   - Zegar można zresetować w dowolnej chwili wciskając wszystkie 3 przyciski.
   
