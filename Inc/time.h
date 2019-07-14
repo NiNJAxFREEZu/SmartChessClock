@@ -1,5 +1,4 @@
 //DEFINICJE PRESETÓW CZASOWYCH --------------------------------------------------------------------
-
 #define NUMBER_OF_PRESETS		12
 
 #define BULLET_1_0				0
@@ -15,8 +14,6 @@
 #define	RAPID_25_10				10
 #define CLASSICAL_30_0			11
 
-#define BLUETOOTH_PRESET		12
-
 //STRUKTURA CZASU
 struct _time
 {
@@ -25,11 +22,12 @@ struct _time
 	volatile uint16_t miliseconds;
 };
 
-//PRESETY CZASOWE
+//STRUKTURA PRESETU CZASOWEGO
 struct _preset
 {
 	struct _time time;
-	volatile uint8_t increment;
+	volatile uint8_t player1Increment;
+	volatile uint8_t player2Increment;
 };
 
 //ZMIENNE GLOBALNE --------------------------------------------------------------------------------
@@ -76,83 +74,89 @@ void increment(struct _time* clock, int secondInc)	//Funkcja inkremetuj¹ca struk
 	}
 }
 
-void PresetInit()	//INICJALIZACJA PRESETÓW CZASOWYCH
+void presetInit()	//INICJALIZACJA PRESETÓW CZASOWYCH	WARNING: HARDCODE AHEAD
 {
 	//BULLET 1+0
 	presets[BULLET_1_0].time.miliseconds = 0;
 	presets[BULLET_1_0].time.seconds = 0;
 	presets[BULLET_1_0].time.minutes = 1;
-	presets[BULLET_1_0].increment = 0;
+	presets[BULLET_1_0].player1Increment = 0;
+	presets[BULLET_1_0].player2Increment = 0;
 
 	//BULLET 2+1
 	presets[BULLET_2_1].time.miliseconds = 0;
 	presets[BULLET_2_1].time.seconds = 0;
 	presets[BULLET_2_1].time.minutes = 2;
-	presets[BULLET_2_1].increment = 1;
+	presets[BULLET_2_1].player1Increment = 1;
+	presets[BULLET_2_1].player2Increment = 1;
 
 	//BLITZ 3+0
 	presets[BLITZ_3_0].time.miliseconds = 0;
 	presets[BLITZ_3_0].time.seconds = 0;
 	presets[BLITZ_3_0].time.minutes = 3;
-	presets[BLITZ_3_0].increment = 0;
+	presets[BLITZ_3_0].player1Increment = 0;
+	presets[BLITZ_3_0].player2Increment = 0;
 
 	//BLITZ 3+2
 	presets[BLITZ_3_2].time.miliseconds = 0;
 	presets[BLITZ_3_2].time.seconds = 0;
 	presets[BLITZ_3_2].time.minutes = 3;
-	presets[BLITZ_3_2].increment = 2;
+	presets[BLITZ_3_2].player1Increment = 2;
+	presets[BLITZ_3_2].player2Increment = 2;
 
 	//BLITZ 5+0
 	presets[BLITZ_5_0].time.miliseconds = 0;
 	presets[BLITZ_5_0].time.seconds = 0;
 	presets[BLITZ_5_0].time.minutes = 5;
-	presets[BLITZ_5_0].increment = 0;
+	presets[BLITZ_5_0].player1Increment = 0;
+	presets[BLITZ_5_0].player2Increment = 0;
 
 	//BLITZ 5+3
 	presets[BLITZ_5_3].time.miliseconds = 0;
 	presets[BLITZ_5_3].time.seconds = 0;
 	presets[BLITZ_5_3].time.minutes = 5;
-	presets[BLITZ_5_3].increment = 3;
+	presets[BLITZ_5_3].player1Increment = 3;
+	presets[BLITZ_5_3].player2Increment = 3;
 
 	//RAPID 10+0
 	presets[RAPID_10_0].time.miliseconds = 0;
 	presets[RAPID_10_0].time.seconds = 0;
 	presets[RAPID_10_0].time.minutes = 10;
-	presets[RAPID_10_0].increment = 0;
+	presets[RAPID_10_0].player1Increment = 0;
+	presets[RAPID_10_0].player2Increment = 0;
 
 	//RAPID 15+0
 	presets[RAPID_15_0].time.miliseconds = 0;
 	presets[RAPID_15_0].time.seconds = 0;
 	presets[RAPID_15_0].time.minutes = 15;
-	presets[RAPID_15_0].increment = 0;
+	presets[RAPID_15_0].player1Increment = 0;
+	presets[RAPID_15_0].player2Increment = 0;
 
 	//RAPID 15+15
 	presets[RAPID_15_15].time.miliseconds = 0;
 	presets[RAPID_15_15].time.seconds = 0;
 	presets[RAPID_15_15].time.minutes = 15;
-	presets[RAPID_15_15].increment = 15;
+	presets[RAPID_15_15].player1Increment = 15;
+	presets[RAPID_15_15].player2Increment = 15;
 
 	//RAPID 25+0
 	presets[RAPID_25_0].time.miliseconds = 0;
 	presets[RAPID_25_0].time.seconds = 0;
 	presets[RAPID_25_0].time.minutes = 25;
-	presets[RAPID_25_0].increment = 0;
+	presets[RAPID_25_0].player1Increment = 0;
+	presets[RAPID_25_0].player2Increment = 0;
 
 	//RAPID 25+10
 	presets[RAPID_25_10].time.miliseconds = 0;
 	presets[RAPID_25_10].time.seconds = 0;
 	presets[RAPID_25_10].time.minutes = 25;
-	presets[RAPID_25_10].increment = 10;
+	presets[RAPID_25_10].player1Increment = 10;
+	presets[RAPID_25_10].player2Increment = 10;
 
 	//CLASSICAL 30+0
 	presets[CLASSICAL_30_0].time.miliseconds = 0;
 	presets[CLASSICAL_30_0].time.seconds = 0;
 	presets[CLASSICAL_30_0].time.minutes = 30;
-	presets[CLASSICAL_30_0].increment = 0;
-
-	//BLUETOOTH
-	presets[BLUETOOTH_PRESET].time.miliseconds = 0;
-	presets[BLUETOOTH_PRESET].time.seconds = 0;
-	presets[BLUETOOTH_PRESET].time.minutes = 99;
-	presets[BLUETOOTH_PRESET].increment = 99;
+	presets[CLASSICAL_30_0].player1Increment = 0;
+	presets[CLASSICAL_30_0].player2Increment = 0;
 }

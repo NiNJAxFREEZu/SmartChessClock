@@ -42,6 +42,7 @@
 
 /* USER CODE BEGIN Includes */
 #include "time.h"
+#include "bluetooth.h"
 #include "ledDisplay1.h"
 #include "ledDisplay2.h"
 /* USER CODE END Includes */
@@ -62,34 +63,31 @@ UART_HandleTypeDef huart3;
 /* Private variables ---------------------------------------------------------*/
 
 //PREPROCESOR
-#define UI_PLAYER1_DIODE_ON		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET)		//Zapalenie diody przycisku 1
-#define UI_PLAYER1_DIODE_OFF	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET)	//Zgaszenie diody przycisku 1
-#define UI_PLAYER1_BUTTON		GPIO_PIN_2												//Uchwyt przycisku gracza 1
+#define UI_PLAYER1_DIODE_ON		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET)		//Turning on player 1 diode
+#define UI_PLAYER1_DIODE_OFF	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET)	//Turning off player 1 diode
+#define UI_PLAYER1_BUTTON		GPIO_PIN_2												//Player 1 button handle
 
-#define UI_PLAYER2_DIODE_ON		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET)		//Zapalenie diody przycisku 2
-#define UI_PLAYER2_DIODE_OFF	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET)	//Zgaszenie diody przycisku 2
-#define UI_PLAYER2_BUTTON		GPIO_PIN_13												//Uchwyt przycisku gracza 2
+#define UI_PLAYER2_DIODE_ON		HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_SET)		//Turning on player 2 diode
+#define UI_PLAYER2_DIODE_OFF	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, GPIO_PIN_RESET)	//Turning off player 2 diode
+#define UI_PLAYER2_BUTTON		GPIO_PIN_13												//Player 2 button handle
 
-#define DEBUG_DIODE1_ON			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET)		//Zapalenie niebieskiej diody na plytce
-#define DEBUG_DIODE1_OFF		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET)	//Zapalenie niebieskiej diody na plytce
-#define UI_PAUSE_BUTTON			GPIO_PIN_1												//Uchwyt przycisku start/stop
-
-//STRUKTURA KOMUNIKATU BLUETOOTH
-struct _bluetooth
-{
-	volatile uint8_t operation;					//S -> start/stop	T -> zmiana gracza	P -> preset czasowy
-	volatile uint8_t player1time[4];			//Znacznik czasowy gracza 1 w milisekundach
-	volatile uint8_t player2time[4];			//Znacznik czasowy gracza 2 w milisekundach
-};
+#define DEBUG_DIODE1_ON			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_SET)		//Turning on the blue diode on board
+#define DEBUG_DIODE1_OFF		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, GPIO_PIN_RESET)	//Turning off the blue diode on board
+#define UI_PAUSE_BUTTON			GPIO_PIN_1												//Pause button handle
 
 //ZMIENNE GLOBALNE
-volatile uint8_t _currentPlayer;		//Zmienna oznaczajaca któremu z graczy uplywa czas
-volatile uint8_t _increment;			//Zmienna oznaczajaca dodawany czas po wcisnieciu przycisku w sekundach
-volatile uint8_t _pause = 1;			//Zmienna wyznaczajaca pauze w pomiarze czasu
-volatile uint8_t _gameOver = 0;			//Zmienna wyznaczająca koniec gry w przypadku gdy jednemu z graczy upłynie czas
-volatile uint8_t _refresh = 0;			//Zmienna wykorzystywana do odświeżania wyświetlaczy zegara
-volatile int8_t _presetSelect = 0;		//Zmienna wykorzystywana przy wyborze presetu zegara
-volatile uint8_t _display;				//Zmienna wykorzysytwana przy miganiu wyświetlaczami przy pauzie
+extern struct _preset presets[NUMBER_OF_PRESETS]; //From the file time.h
+extern struct _time PLAYER1_TIME;
+extern struct _time PLAYER2_TIME;
+
+volatile uint8_t _currentPlayer;	//Indicates the current player to move (1/2)
+uint8_t _player1Increment;			//Holds the amount of time in seconds to increment for player 1
+uint8_t _player2Increment;			//Holds the amount of time in seconds to increment for player 2
+volatile uint8_t _pause = 1;		//Indicates if the clock is paused (1) or not (0)
+volatile uint8_t _gameOver = 0;		//Indicates if one of players time ran out
+volatile uint8_t _refresh = 0;		//Used for refreshing the LED displays
+volatile int8_t _presetSelect = 0;	//Used as a index for the array of presets and as an indicator to different phases of selecting a preset
+volatile uint8_t _displayOn;		//Indicates if the displays are on or off
 
 /* USER CODE END PV */
 
@@ -109,118 +107,6 @@ static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 
-/* FUNKCJE DO OBS�?UGI MODU�?U BLUETOOTH -------------------------------------------------------------*/
-
-struct _bluetooth buildBluetoothMessage(char operation)
-{
-	struct _bluetooth out;
-	uint32_t p1t, p2t;
-
-	p1t = PLAYER1_TIME.miliseconds + PLAYER1_TIME.seconds * 1000 + PLAYER1_TIME.minutes * 60000;
-	p2t = PLAYER2_TIME.miliseconds + PLAYER2_TIME.seconds * 1000 + PLAYER2_TIME.minutes * 60000;
-
-	out.operation = operation;
-	out.player1time[0] = (p1t >> 24) & 0xFF;
-	out.player1time[1] = (p1t >> 16) & 0xFF;
-	out.player1time[2] = (p1t >> 8) & 0xFF;
-	out.player1time[3] = p1t & 0xFF;
-
-	out.player2time[0] = (p2t >> 24) & 0xFF;
-	out.player2time[1] = (p2t >> 16) & 0xFF;
-	out.player2time[2] = (p2t >> 8) & 0xFF;
-	out.player2time[3] = p2t & 0xFF;
-
-	return out;
-}
-
-void sendBluetoothMessage(char operation)
-{
-	struct _bluetooth message = buildBluetoothMessage(operation);
-	uint16_t messageSize = 9;
-	uint8_t messageBytes[9];
-
-	messageBytes[0] = message.operation;
-	messageBytes[1] = message.player1time[0];
-	messageBytes[2] = message.player1time[1];
-	messageBytes[3] = message.player1time[2];
-	messageBytes[4] = message.player1time[3];
-
-	messageBytes[5] = message.player2time[0];
-	messageBytes[6] = message.player2time[1];
-	messageBytes[7] = message.player2time[2];
-	messageBytes[8] = message.player2time[3];
-
-
-	HAL_UART_Transmit_IT(&huart3, messageBytes, messageSize);
-}
-
-struct _bluetooth receiveBluetoothMessage()
-{
-	struct _bluetooth out;
-	uint16_t messageSize = 9;
-	uint8_t messageBytes[9];
-
-
-	HAL_UART_Receive_IT(&huart3, messageBytes, messageSize);
-
-	out.operation = messageBytes[0];
-
-
-	out.player1time[0] = messageBytes[1];
-	out.player1time[1] = messageBytes[2];
-	out.player1time[2] = messageBytes[3];
-	out.player1time[3] = messageBytes[4];
-
-	out.player2time[0] = messageBytes[5];
-	out.player2time[1] = messageBytes[6];
-	out.player2time[2] = messageBytes[7];
-	out.player2time[3] = messageBytes[8];
-
-	return out;
-}
-
-void addPresetFromBluetooth()
-{
-	struct _bluetooth message = receiveBluetoothMessage();
-
-	uint32_t baseTime, increment;
-	uint8_t baseTimeArr[4], incrementArr[4];
-
-	//Konwersja komunikatu na integery
-	baseTimeArr[0] = message.player1time[0];
-	baseTimeArr[1] = message.player1time[1];
-	baseTimeArr[2] = message.player1time[2];
-	baseTimeArr[3] = message.player1time[3];
-
-	incrementArr[0] = message.player2time[0];
-	incrementArr[1] = message.player2time[1];
-	incrementArr[2] = message.player2time[2];
-	incrementArr[3] = message.player2time[3];
-
-
-	baseTime = *(int *)baseTimeArr;
-	increment = *(int *)incrementArr;
-
-	//Uzupełnienie struktury presetu
-	unsigned int divider;
-
-	//Określenie liczby minut
-	divider = baseTime / 60000;
-	baseTime -= divider * 60000;
-	presets[BLUETOOTH_PRESET].time.minutes = divider * 60000;
-
-	//Określenie liczby sekund
-	divider = baseTime / 1000;
-	baseTime -= divider * 1000;
-	presets[BLUETOOTH_PRESET].time.minutes = divider * 1000;
-
-	//Określenie liczby milisekund
-	presets[BLUETOOTH_PRESET].time.miliseconds = baseTime;
-
-	//Przypisanie liczby sekund do inkrementu
-	presets[BLUETOOTH_PRESET].increment = increment / 1000;
-}
-
 /* FUNKCJE MIERZĄCE/OBS�?UGUJĄCE CZAS---------------------------------------------------------------*/
 void setClocks(int presetIndex)						//Funkcja ustawia czas obu zegarów z numeru presetu
 {
@@ -232,7 +118,8 @@ void setClocks(int presetIndex)						//Funkcja ustawia czas obu zegarów z numer
 	PLAYER2_TIME.seconds = 		presets[presetIndex].time.seconds;
 	PLAYER2_TIME.miliseconds = 	presets[presetIndex].time.miliseconds;
 
-	_increment = presets[presetIndex].increment;
+	_player1Increment = presets[presetIndex].player1Increment;
+	_player2Increment = presets[presetIndex].player2Increment;
 }
 
 void clockTick()	//FUNCKJA ZMNIEJSZAJĄCA CZAS ZEGARA WYWO�?YWANA W PRZERWANIU TIMERA i całą logikę z tym związaną
@@ -241,7 +128,7 @@ void clockTick()	//FUNCKJA ZMNIEJSZAJĄCA CZAS ZEGARA WYWO�?YWANA W PRZERWANIU
 	{
 		if(decrement(&PLAYER1_TIME) == 0)	//Jeżeli graczowi jeszcze nie skończył się czas
 		{
-
+			;
 		}
 		else	//Graczowi 1 skończył się czas
 		{
@@ -256,7 +143,7 @@ void clockTick()	//FUNCKJA ZMNIEJSZAJĄCA CZAS ZEGARA WYWO�?YWANA W PRZERWANIU
 	{
 		if(decrement(&PLAYER2_TIME) == 0)	//Jeżeli graczowi jeszcze nie skończył się czas
 		{
-
+			;
 		}
 		else	//Graczowi 2 skończył się czas
 		{
@@ -270,18 +157,14 @@ void clockTick()	//FUNCKJA ZMNIEJSZAJĄCA CZAS ZEGARA WYWO�?YWANA W PRZERWANIU
 
 void clockIncrement()	//FUNCKJA INKREMENTUJĄCA CZAS ZEGARA WYWO�?YWANA W PRZERWANIU PRZYCISKÓW i całą logikę z tym związaną
 {
-	if(_pause == 0)	//Jeżeli gra jest spauzowania nie wykonujemy inkrementacji
+	if(_pause == 0)	//If the game is not paused we perform incrementation of time
 	{
 
 	if(_currentPlayer == 1)
-		{
-			increment(&PLAYER1_TIME, _increment);
-		}
+		increment(&PLAYER1_TIME, _player1Increment);
 
 	else if(_currentPlayer == 2)
-		{
-			increment(&PLAYER2_TIME, _increment);
-		}
+		increment(&PLAYER2_TIME, _player2Increment);
 
 	}
 }
@@ -304,14 +187,14 @@ void onDisplays()
 {
 	tm1637SetBrightness('8');
 	tm1637SetBrightness2('8');
-	_display = 1;
+	_displayOn = 1;
 }
 
 void offDisplays()
 {
 	tm1637SetBrightness('0');
 	tm1637SetBrightness2('0');
-	_display = 0;
+	_displayOn = 0;
 }
 
 int timeToDisplay(struct _time* clock)	//Fukcja zwraca integera do wyświetlenia na ekranie
@@ -329,10 +212,6 @@ void switchPlayers()				//Funkcja zmienajaca któremu graczowi ma uplywac czas
 			UI_PLAYER2_DIODE_ON;
 			clockIncrement();		//Inkrementacja czasu jest w osobnej funkcji żeby umożliwic zmianę graczy na pauzie bez dodawania czasu
 			_currentPlayer = 2;
-
-		   	//Wysłanie komunikatu bluetooth o zmianie gracza do aplikacji
-		   	sendBluetoothMessage('T');
-
 			return;
 		}
 
@@ -342,10 +221,6 @@ void switchPlayers()				//Funkcja zmienajaca któremu graczowi ma uplywac czas
 			UI_PLAYER2_DIODE_OFF;
 			clockIncrement();
 			_currentPlayer = 1;
-
-			//Wysłanie komunikatu bluetooth o zmianie gracza do aplikacji
-			sendBluetoothMessage('T');
-
 			return;
 		}
 	}
@@ -378,10 +253,6 @@ void switchTimer()				//Funkcja przełączająca timer podczas pauzowania/wznawi
 	   		HAL_TIM_Base_Stop_IT(&htim2);			//Zatrzymanie timera odmierzającego czas
 	   		HAL_TIM_Base_Stop_IT(&htim9);
 	  	}
-
-	   	//Wysłanie komunikatu bluetooth o starcie/stopie do aplikacji
-	   	sendBluetoothMessage('S');
-
 	 }
 }
 
@@ -429,6 +300,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)	//Przerwania Timeró
    			//Na razie programowo
    			int i;
    			for(i = 0; i < 1000000; ++i);
+
    			NVIC_SystemReset();
    		}
 
@@ -436,11 +308,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)	//Przerwania Timeró
    		{
    			if(_presetSelect != -1)		//Wciśnięcie przysicku pauzy rozpoczyna rozgrywkę
    			{
-   				if(_presetSelect == BLUETOOTH_PRESET)	//Jeżeli gracz wybrał preset ósmy, czyli czeka na preset z aplikacji...
-   				{
-   					addPresetFromBluetooth();
-   				}
-
    				setClocks(_presetSelect);
    				_presetSelect = -1;
    				_pause = 1;
@@ -524,13 +391,13 @@ int main(void)
   tm1637Init();
   tm1637Init2();
   onDisplays();										//Włączenie obu wyświetlaczy
-  HAL_GPIO_EXTI_IRQHandler(UI_PLAYER1_BUTTON);		//Odświeżenie EXTI
-  HAL_GPIO_EXTI_IRQHandler(UI_PLAYER2_BUTTON);
-  HAL_GPIO_EXTI_IRQHandler(UI_PAUSE_BUTTON);
+  __HAL_GPIO_EXTI_CLEAR_IT(UI_PLAYER1_BUTTON);		//Odświeżenie EXTI
+  __HAL_GPIO_EXTI_CLEAR_IT(UI_PLAYER2_BUTTON);
+  __HAL_GPIO_EXTI_CLEAR_IT(UI_PAUSE_BUTTON);
 
 
   //INICJALIZACJA ZEGARA---------------------------------------------------------------------------
-  PresetInit();						//Wypełnienie pamięci presetami
+  presetInit();						//Wypełnienie pamięci presetami
   HAL_TIM_Base_Start_IT(&htim3);	//Uruchomienie timera odświeżającego wyświetlacze
 
 
@@ -540,7 +407,7 @@ int main(void)
 	  if(_refresh == 1)
 	  {
 		  tm1637DisplayDecimal(_presetSelect + 1, 0);
-		  tm1637DisplayDecimal2(presets[_presetSelect].time.minutes * 100 + presets[_presetSelect].increment, 1);
+		  tm1637DisplayDecimal2(presets[_presetSelect].time.minutes * 100 + presets[_presetSelect].player1Increment, 1);
 	  	  _refresh = 0;
 	  }
 
