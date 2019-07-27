@@ -80,9 +80,9 @@ extern struct _preset presets[NUMBER_OF_PRESETS]; //From the file time.h
 extern struct _time PLAYER1_TIME;
 extern struct _time PLAYER2_TIME;
 
-volatile uint8_t _currentPlayer;	//Indicates the current player to move (1/2)
 uint8_t _player1Increment;			//Holds the amount of time in seconds to increment for player 1
 uint8_t _player2Increment;			//Holds the amount of time in seconds to increment for player 2
+volatile uint8_t _currentPlayer;	//Indicates the current player to move (1/2)
 volatile uint8_t _pause = 1;		//Indicates if the clock is paused (1) or not (0)
 volatile uint8_t _gameOver = 0;		//Indicates if one of players time ran out
 volatile uint8_t _refresh = 0;		//Used for refreshing the LED displays
