@@ -428,8 +428,8 @@ int main(void)
   /* USER CODE BEGIN 3 */
 	  if(_refresh == 1)
 	  {
-		  tm1637DisplayDecimal(timeToDisplay(&PLAYER1_TIME), !((PLAYER1_TIME.miliseconds / 500) && (_currentPlayer == 1)));
-		  tm1637DisplayDecimal2(timeToDisplay(&PLAYER2_TIME), !((PLAYER2_TIME.miliseconds / 500) && (_currentPlayer == 2)));
+		  tm1637DisplayDecimal(timeToDisplay(&PLAYER1_TIME), !((PLAYER1_TIME.miliseconds / 500) && (_currentPlayer == 1)) || _pause);
+		  tm1637DisplayDecimal2(timeToDisplay(&PLAYER2_TIME), !((PLAYER2_TIME.miliseconds / 500) && (_currentPlayer == 2)) || _pause);
 		  _refresh = 0;
 	  }
   }
