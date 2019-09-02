@@ -49,6 +49,8 @@
 
 /* Private define ------------------------------------------------------------*/
 
+#define BUZZER_Pin GPIO_PIN_0
+#define BUZZER_GPIO_Port GPIOB
 #define PAUSE_BUTTON_Pin GPIO_PIN_1
 #define PAUSE_BUTTON_GPIO_Port GPIOB
 #define PAUSE_BUTTON_EXTI_IRQn EXTI1_IRQn

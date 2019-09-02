@@ -76,6 +76,9 @@ UART_HandleTypeDef huart3;
 #define DEBUG_DIODE_TOGGLE		HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_8)
 #define UI_PAUSE_BUTTON			GPIO_PIN_1												//Pause button handle
 
+#define BUZZER_ON				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_SET)		//Turning on buzzer
+#define BUZZER_OFF				HAL_GPIO_WritePin(GPIOB, GPIO_PIN_0, GPIO_PIN_RESET)	//Turning off buzzer
+
 //ZMIENNE GLOBALNE
 extern struct _preset presets[NUMBER_OF_PRESETS]; //From the file time.h
 extern struct _time PLAYER1_TIME;
@@ -133,10 +136,15 @@ void clockTick()	//Invokes all logic behind reducing player's to move time
 		}
 		else	//Player 1 has ran out of time
 		{
-				_pause = 1;
-				_gameOver = 1;
-				HAL_TIM_Base_Stop_IT(&htim2);
-				HAL_TIM_Base_Stop_IT(&htim9);
+
+			//TIM6 interrupts upon starting! That's super intended (feature) !!!
+			HAL_TIM_Base_Start_IT(&htim6);	//Starts a timer that will make buzzer stop beeping and beep again a couple times
+
+			_pause = 1;
+			_gameOver = 1;
+			HAL_TIM_Base_Stop_IT(&htim2);
+			HAL_TIM_Base_Stop_IT(&htim9);
+
 		}
 	}
 
@@ -148,10 +156,13 @@ void clockTick()	//Invokes all logic behind reducing player's to move time
 		}
 		else	//Player 2 has ran out of time
 		{
-				_pause = 1;
-				_gameOver = 1;
-				HAL_TIM_Base_Stop_IT(&htim2);
-				HAL_TIM_Base_Stop_IT(&htim9);
+			//TIM6 interrupts upon starting! That's super intended (feature) !!!
+			HAL_TIM_Base_Start_IT(&htim6);	//Starts a timer that will make buzzer stop beeping and beep again a couple times
+
+			_pause = 1;
+			_gameOver = 1;
+			HAL_TIM_Base_Stop_IT(&htim2);
+			HAL_TIM_Base_Stop_IT(&htim9);
 		}
 	}
 }
@@ -202,6 +213,21 @@ void offDisplays()
 	tm1637SetBrightness('0');
 	tm1637SetBrightness2('0');
 	_displayOn = 0;
+}
+
+void buzzerBeeper()
+{
+	static int beepCounter = 0;
+
+	if(beepCounter % 2 == 0)	//if there is no beep
+		BUZZER_ON;
+	else
+		BUZZER_OFF;
+
+	++beepCounter;
+
+	if(beepCounter >= 6)
+		HAL_TIM_Base_Stop_IT(&htim6);
 }
 
 int timeToDisplay(struct _time* clock)	//Fukcja zwraca integera do wyświetlenia na ekranie
@@ -287,6 +313,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)	//Przerwania Timeró
 
    	if(htim->Instance == TIM3)	//Przepełnienie timera nr 3 -> odświeżenie wyświetlaczy
    		_refresh = 1;
+
+   	if(htim->Instance == TIM6)	//BEEP BOOP na koniec gry
+   		buzzerBeeper();
 
    	if(htim->Instance == TIM10)	//Przepełnienie timera nr 10 -> debouncing przycisków
    	{
@@ -391,6 +420,12 @@ int main(void)
   __HAL_GPIO_EXTI_CLEAR_IT(UI_PLAYER2_BUTTON);
   __HAL_GPIO_EXTI_CLEAR_IT(UI_PAUSE_BUTTON);
 
+  //TIM6 interrupts upon starting! That's super intended (feature) !!!
+  //Clearing the interrupt flags after timer inits ensures that timer interrupts won't be triggered uopn starting the timers
+  __HAL_TIM_CLEAR_FLAG(&htim2, TIM_SR_UIF);
+  __HAL_TIM_CLEAR_FLAG(&htim3, TIM_SR_UIF);
+  __HAL_TIM_CLEAR_FLAG(&htim9, TIM_SR_UIF);
+  __HAL_TIM_CLEAR_FLAG(&htim10, TIM_SR_UIF);
 
   //INICJALIZACJA ZEGARA---------------------------------------------------------------------------
   presetInit();						//Wypełnienie pamięci presetami
@@ -744,10 +779,17 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, PLAYER1_DIODE_Pin|PLAYER2_DIODE_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, BUZZER_Pin|PLAYER1_DIODE_Pin|PLAYER2_DIODE_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(DEBUG_TIMER_GPIO_Port, DEBUG_TIMER_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : BUZZER_Pin */
+  GPIO_InitStruct.Pin = BUZZER_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  HAL_GPIO_Init(BUZZER_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PAUSE_BUTTON_Pin PLAYER1_BUTTON_Pin PLAYER2_BUTTON_Pin */
   GPIO_InitStruct.Pin = PAUSE_BUTTON_Pin|PLAYER1_BUTTON_Pin|PLAYER2_BUTTON_Pin;

@@ -1,4 +1,4 @@
-//DEFINICJE PRESETÓW CZASOWYCH --------------------------------------------------------------------
+//DEFINICJE PRESETï¿½W CZASOWYCH --------------------------------------------------------------------
 #define NUMBER_OF_PRESETS		12
 
 #define BULLET_1_0				0
@@ -31,13 +31,13 @@ struct _preset
 };
 
 //ZMIENNE GLOBALNE --------------------------------------------------------------------------------
-struct _preset presets[NUMBER_OF_PRESETS];	//Struktura zawieraj¹ca presety czasowe
-struct _time PLAYER1_TIME;	//Struktura przechowuj¹ca informacje o czasie gracza nr 1
-struct _time PLAYER2_TIME;	//Struktura przechowuj¹ca informacje o czasie gracza nr 2
+struct _preset presets[NUMBER_OF_PRESETS];	//Struktura zawierajï¿½ca presety czasowe
+struct _time PLAYER1_TIME;	//Struktura przechowujï¿½ca informacje o czasie gracza nr 1
+struct _time PLAYER2_TIME;	//Struktura przechowujï¿½ca informacje o czasie gracza nr 2
 //-------------------------------------------------------------------------------------------------
 
 //FUNKCJE -----------------------------------------------------------------------------------------
-int decrement(struct _time* clock)	//Funkcja pomniejszaj¹ca strukturê czasu o 1ms
+int decrement(struct _time* clock)	//Funkcja pomniejszajï¿½ca strukturï¿½ czasu o 1ms
 {
 	if(clock->miliseconds <= 0)
 	{
@@ -60,21 +60,21 @@ int decrement(struct _time* clock)	//Funkcja pomniejszaj¹ca strukturê czasu o 1m
 	return 0;
 }
 
-void increment(struct _time* clock, int secondInc)	//Funkcja inkremetuj¹ca strukturê czasow¹ o zadan¹ liczbê sekund
+void increment(struct _time* clock, int secondInc)	//Funkcja inkremetujï¿½ca strukturï¿½ czasowï¿½ o zadanï¿½ liczbï¿½ sekund
 {
-	if(secondInc == 0)	//Je¿eli inkrementacja jest "zerowa"
+	if(secondInc == 0)	//Jeï¿½eli inkrementacja jest "zerowa"
 		return;
 
 	clock->seconds += secondInc;
 
-	if(clock->seconds >= 60)	//Je¿eli przekroczymy licznik minut podczas inkrementacji
+	if(clock->seconds >= 60)	//Jeï¿½eli przekroczymy licznik minut podczas inkrementacji
 	{
 		clock->minutes++;
 		clock->seconds -= 60;
 	}
 }
 
-void presetInit()	//INICJALIZACJA PRESETÓW CZASOWYCH	WARNING: HARDCODE AHEAD
+void presetInit()	//INICJALIZACJA PRESETï¿½W CZASOWYCH	WARNING: HARDCODE AHEAD
 {
 	//BULLET 1+0
 	presets[BULLET_1_0].time.miliseconds = 0;
