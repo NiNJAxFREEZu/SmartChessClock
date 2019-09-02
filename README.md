@@ -54,7 +54,7 @@ Przy podłączaniu przycisków należy patrzeć od strony zegarów i przyjąć p
  - ![#000000](https://placehold.it/15/000000/000000?text=+) `PB14`
  
 *Pause*
-- ![#999999](https://placehold.it/15/999999/000000?text=+) `PB1`
+- ![#000000](https://placehold.it/15/000000/000000?text=+) `PB1`
 
 *Wspólna masa*
-- ![#999999](https://placehold.it/15/999999/000000?text=+) `GND`
+- ![#000000](https://placehold.it/15/000000/000000?text=+) `GND`
