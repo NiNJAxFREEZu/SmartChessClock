@@ -38,7 +38,7 @@ Projekt oprogramowania do inteligentnego zegara szachowego
 
 *BUZZER*
 - ![#ff2400](https://placehold.it/15/ff2400/000000?text=+) `PB0`
-- ![#654321](https://placehold.it/15/654321/000000?text=+) `GND`
+- ![#808000](https://placehold.it/15/808000/000000?text=+) `GND`
 
 
 __*Przyciski*__
