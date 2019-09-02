@@ -7,7 +7,7 @@ Projekt oprogramowania do inteligentnego zegara szachowego
   - Podświetlenie przycisków graczy (LED)
   - Możliwość wyboru jednego z wielu presetów czasowych oraz tworzenia własnych presetów (customizacja in progress)
   - Moduł bluetooth do komunikacji z aplikacją android (in progress)
-  - Buzzer wydający dźwięk po zakończeniu czasu jednego z graczy (in progress)
+  - Buzzer wydający dźwięk po zakończeniu czasu jednego z graczy
   - 2 wyświetlacze LED siedmiosegmentowe z dwukropkiem
   - Sercem zegara jest płytka z mikrokontrolerem firmy ST Microelectronics
   - Czas graczy jest pamiętany z dokładnością do 1ms
@@ -54,5 +54,7 @@ Przy podłączaniu przycisków należy patrzeć od strony zegarów i przyjąć p
  - ![#000000](https://placehold.it/15/000000/000000?text=+) `PB14`
  
 *Pause*
-- Dłuższy czarny do GND;
-- Krótszy czarny do PB1.
+- ![#999999](https://placehold.it/15/999999/000000?text=+) `PB1`
+
+*Wspólna masa*
+- ![#999999](https://placehold.it/15/999999/000000?text=+) `GND`
