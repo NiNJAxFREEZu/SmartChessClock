@@ -22,7 +22,7 @@ Projekt oprogramowania do inteligentnego zegara szachowego
     - (PLAYER1_BUTTON -> zwiększenie licznika presetu)
   - Zegar można zresetować w dowolnej chwili wciskając wszystkie 3 przyciski.
   
-  ### TEMP: Podłączanie kabli
+  ### Podłączanie przewodów
  
  *DISP_1*
 - ![#0ab858](https://placehold.it/15/0ab858/000000?text=+) `PB6`
@@ -35,6 +35,11 @@ Projekt oprogramowania do inteligentnego zegara szachowego
 - ![#ff7d00](https://placehold.it/15/ff7d00/000000?text=+) `PB11`
 - ![#ff2400](https://placehold.it/15/ff2400/000000?text=+) `VDD`
 - ![#654321](https://placehold.it/15/654321/000000?text=+) `GND`
+
+*BUZZER*
+- ![#ff2400](https://placehold.it/15/ff2400/000000?text=+) `PB0`
+- ![#654321](https://placehold.it/15/654321/000000?text=+) `GND`
+
 
 __*Przyciski*__
 
