@@ -62,5 +62,6 @@ Przy podłączaniu przycisków należy patrzeć od strony zegarów i przyjąć p
 
 ### Warte uwagi
 
-    - *Timer 6 ma specyficzną zależność przy której przerwanie następuje od razu po wywołaniu funkcji, która go uruchamia.* Na ten moment okazuje się, że jest to efekt przydatny i wykorzystywany, jednak w ramach przeciwdziałania wszystkie timery (oprócz 6) mają w kodzie wyłączone flagi za to odpowiedzialne.
-    - *Kiedy STM korzysta ze źródła zasilania innego niż ???gniazdko???, taktowanie procesora jest zmniejszone o połowę.* W ramach rekompensaty zmieniono częstotliwość taktowania STM'a bezpośrednio w programie CUBE. Należy jednak o tym pamiętać w przypadku chęci zmiany źródła zasilania.
+- **Timer 6 ma specyficzną zależność przy której przerwanie następuje od razu po wywołaniu funkcji, która go uruchamia.** Na ten moment okazuje się, że jest to efekt przydatny i wykorzystywany, jednak w ramach przeciwdziałania wszystkie timery (oprócz 6) mają w kodzie wyłączone flagi za to odpowiedzialne.
+    
+- **Kiedy STM korzysta ze źródła zasilania innego niż ???gniazdko???, taktowanie procesora jest zmniejszone o połowę.** W ramach rekompensaty zmieniono częstotliwość taktowania STM'a bezpośrednio w programie CUBE. Należy jednak o tym pamiętać w przypadku chęci zmiany źródła zasilania.
