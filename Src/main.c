@@ -232,7 +232,11 @@ void buzzerBeeper()
 
 int timeToDisplay(struct _time* clock)	//Fukcja zwraca integera do wyświetlenia na ekranie
 {
-	return clock->minutes * 100 + clock->seconds;
+	if(clock->seconds < 10)
+		return clock.seconds * 100 + clock.miliseconds / 10;
+	
+	else
+		return clock->minutes * 100 + clock->seconds;
 }
 
 void switchTimer()				//Funkcja przełączająca timer podczas pauzowania/wznawiania gry
